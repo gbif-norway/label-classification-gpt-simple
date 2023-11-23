@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: label-classification-gpt-simple
+spec:
+  containers:
+    - name: label-classification-gpt-simple
+      image: gbifnorway/le-simple:latest
+      imagePullPolicy: Always
+      env:
+        - name: ANNOTATER_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: annotater-api-key
+              key: key
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openai-api-key
+              key: key
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /etc/gapi-secret-volume/gapi-secret.json
+      resources:
+        limits:
+          memory: 512Mi
+          cpu: "1"
+        requests:
+          memory: 256Mi
+          cpu: "0.2"
+      volumeMounts:
+        - name: gapi-secret-volume
+          mountPath: /etc/gapi-secret-volume
+  volumes:
+    - name: gapi-secret-volume
+      secret:
+        secretName: gapi

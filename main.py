@@ -2,6 +2,7 @@ import requests
 from helpers.api_gcv_ocr import detect_text
 from helpers.api_annotater import annotate, delete_annotation
 from helpers.api_openai import gpt_standardise_text
+import pandas as pd
 
 
 def get_smallest_img_from_gbif(catalog_number, dataset):
@@ -29,9 +30,10 @@ def get_smallest_img_from_gbif(catalog_number, dataset):
 
     return smallest_image_url
 
-# for id in range(2497, 2500):
-#     delete_annotation(id)
+for id in range(2497, 2552):
+    delete_annotation(id)
 
+results = {}
 with open('input/catalog_numbers.txt', 'r') as file:
     for catalog in file:
         catalog = catalog.strip()
@@ -48,4 +50,11 @@ with open('input/catalog_numbers.txt', 'r') as file:
         github_base_url = 'https://raw.githubusercontent.com/gbif-norway/gpt-prompts/master/functions'
         gpt = gpt_standardise_text(ocr['text'], prompt_url=f'{github_base_url}/function_calling_system_prompt.txt', function_url=f'{github_base_url}/general_extract_dwc.yml')
         annotate(id=occurrence_id, source='gpt-4', notes=url, annotation=gpt)
-        import pdb; pdb.set_trace()
+        results[catalog] = {'verbatim': ocr['text'] }.update(gpt)
+        
+df = pd.DataFrame.from_dict(results, orient='index')
+df.to_csv('output.csv')
+
+
+
+

@@ -5,7 +5,7 @@ from typing import Dict, Any
 
 
 ANNOTATE_URI = 'https://annotater.svc.gbif.no/'
-ANNOTATE_KEY = os.getenv('ANNOTATER_KEY')
+ANNOTATE_KEY = os.getenv('ANNOTATER_API_KEY')
 
 def annotate(id, annotation, source, notes):
     headers = {'Authorization': f'Token {ANNOTATE_KEY}', 'Content-Type': 'application/json'}
