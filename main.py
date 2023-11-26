@@ -3,6 +3,7 @@ from helpers.api_gcv_ocr import detect_text
 from helpers.api_annotater import annotate, delete_annotation
 from helpers.api_openai import gpt_standardise_text
 import pandas as pd
+import re
 
 
 def get_smallest_img_from_gbif(catalog_number, dataset):
@@ -48,6 +49,11 @@ with open('input/catalog_numbers.txt', 'r') as file:
         # annotate(id=occurrence_id, source='gcv_ocr_flat', notes=url, annotation=flat)
 
         github_base_url = 'https://raw.githubusercontent.com/gbif-norway/gpt-prompts/master/functions'
+
+        for_exclusion = ['Herb. Oslo (O)', 'Herb. Univers. Osloensis', 'Herb. Univers. Osloënsis', 'Planta Scandinavica', 'Flora Suecica', 'Flora Norvegica']
+        for exclude in for_exclusion:
+            ocr['text'] = re.sub(re.escape(exclude), '', ocr['text'], flags=re.IGNORECASE)
+
         gpt = gpt_standardise_text(ocr['text'], prompt_url=f'{github_base_url}/function_calling_system_prompt.txt', function_url=f'{github_base_url}/general_extract_dwc.yml')
         annotate(id=occurrence_id, source='gpt-4', notes=url, annotation=gpt)
         results[catalog] = {**{'verbatimLabel': ocr['text'] }, **gpt}
