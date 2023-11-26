@@ -50,7 +50,7 @@ with open('input/catalog_numbers.txt', 'r') as file:
         github_base_url = 'https://raw.githubusercontent.com/gbif-norway/gpt-prompts/master/functions'
         gpt = gpt_standardise_text(ocr['text'], prompt_url=f'{github_base_url}/function_calling_system_prompt.txt', function_url=f'{github_base_url}/general_extract_dwc.yml')
         annotate(id=occurrence_id, source='gpt-4', notes=url, annotation=gpt)
-        results[catalog] = {'verbatim': ocr['text'] }.update(gpt)
+        results[catalog] = {**{'verbatimLabel': ocr['text'] }, **gpt}
         
 df = pd.DataFrame.from_dict(results, orient='index')
 df.to_csv('output.csv')
