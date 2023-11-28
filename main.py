@@ -30,8 +30,8 @@ def get_smallest_img_from_gbif(catalog_number, dataset):
 
     return smallest_image_url
 
-for id in range(2497, 2552):
-    delete_annotation(id)
+# for id in range(2497, 2552):
+#     delete_annotation(id)
 
 results = {}
 with open('input/catalog_numbers.txt', 'r') as file:
@@ -47,8 +47,7 @@ with open('input/catalog_numbers.txt', 'r') as file:
         # flat = flatten(ocr['pages'])
         # annotate(id=occurrence_id, source='gcv_ocr_flat', notes=url, annotation=flat)
 
-        github_base_url = 'https://raw.githubusercontent.com/gbif-norway/gpt-prompts/master/functions'
-        gpt = gpt_standardise_text(ocr['text'], prompt_url=f'{github_base_url}/function_calling_system_prompt.txt', function_url=f'{github_base_url}/general_extract_dwc.yml')
+        gpt = gpt_standardise_text(ocr['text'], prompt_url='./helpers/prompt.txt', function_url='./helpers/function.yml')
         annotate(id=occurrence_id, source='gpt-4', notes=url, annotation=gpt)
         results[catalog] = {'verbatim': ocr['text'] }.update(gpt)
         
