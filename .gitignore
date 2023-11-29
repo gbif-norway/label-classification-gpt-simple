@@ -5,5 +5,4 @@ __pycache__/
 *.pyc
 *.jpg
 *.csv
-input/**/*
 .vscode/
