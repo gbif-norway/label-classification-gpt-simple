@@ -3,6 +3,9 @@ from helpers.api_gcv_ocr import detect_text
 from helpers.api_annotater import annotate, delete_annotation
 from helpers.api_openai import gpt_standardise_text
 import pandas as pd
+import yaml
+import re
+import csv
 
 
 def get_smallest_img_from_gbif(catalog_number, dataset):
@@ -33,9 +36,18 @@ def get_smallest_img_from_gbif(catalog_number, dataset):
 # for id in range(2497, 2552):
 #     delete_annotation(id)
 
+with open('helpers/prompt.txt') as prompt, open('helpers/function.yml') as function:
+    prompt = prompt.read()
+    function = yaml.safe_load(function.read())
+
 results = {}
-with open('input/catalog_numbers.txt', 'r') as file:
+with open('input/catalog_numbers.txt') as file, open('output-append.csv', 'a', newline='') as csvfile:
+    writer = csv.DictWriter(csvfile, fieldnames=['catalogNumber', 'verbatimLabel'] + list(function['function']['parameters']['properties'].keys()))
+    writer.writeheader()
+    i = 0
+    
     for catalog in file:
+        print(f'----{i}----')
         catalog = catalog.strip()
         url = get_smallest_img_from_gbif(catalog, 'e45c7d91-81c6-4455-86e3-2965a5739b1f')
         occurrence_id = 'urn:catalog:O:V:' + catalog
@@ -47,13 +59,16 @@ with open('input/catalog_numbers.txt', 'r') as file:
         # flat = flatten(ocr['pages'])
         # annotate(id=occurrence_id, source='gcv_ocr_flat', notes=url, annotation=flat)
 
-        gpt = gpt_standardise_text(ocr['text'], prompt_url='./helpers/prompt.txt', function_url='./helpers/function.yml')
+        for_exclusion = ['Herb. Oslo (O)', 'Herb. Univers. Osloensis', 'Herb. Univers. Osloënsis', 'Planta Scandinavica', 'Flora Suecica', 'Flora Norvegica']
+        for exclude in for_exclusion:
+            ocr['text'] = re.sub(re.escape(exclude), '', ocr['text'], flags=re.IGNORECASE)
+
+            gpt = gpt_standardise_text(ocr['text'], prompt, function)
         annotate(id=occurrence_id, source='gpt-4', notes=url, annotation=gpt)
-        results[catalog] = {'verbatim': ocr['text'] }.update(gpt)
+        results[catalog] = {**{'verbatimLabel': ocr['text']}, **gpt}
+        writer.writerow({**{'catalogNumber': catalog}, **results[catalog]})
+        i += 1
         
 df = pd.DataFrame.from_dict(results, orient='index')
 df.to_csv('output.csv')
-
-
-
-
+import pdb; pdb.set_trace()

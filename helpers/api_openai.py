@@ -1,17 +1,13 @@
 from openai import OpenAI
 import ast
-import requests
 import json
-import yaml
 
 
-def gpt_standardise_text(text, prompt_url, function_url):
-    function = yaml.safe_load(requests.get(function_url).text)
-    system_prompt = requests.get(prompt_url).text
+def gpt_standardise_text(text, prompt, function):
     openai_args = {
         'model': 'gpt-4',
         'temperature': 0.2,
-        'messages': [{'role': 'system', 'content': system_prompt}, {'role': 'user', 'content': text}],
+        'messages': [{'role': 'system', 'content': prompt}, {'role': 'user', 'content': text}],
         'tools': [function],
         'tool_choice': {'type': 'function', 'function': {'name': function['function']['name']}}
     }

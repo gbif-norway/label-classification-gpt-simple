@@ -40,5 +40,8 @@ function:
         description: true if this specimen appears to be an ex herb specimen. Add any additional relevant information and context in occurrenceRemarks, e.g. Originally from a collection at UNIV. OULUENSIS
       isExsiccata:
         type: boolean
-        description: true if this specimen appears to be exsiccata. Add any additional relevant information and context in occurrenceRemarks, e.g. Exsiccatae 484 within the Plantae Suecicae exsiccatae (editor Eric Hultén)
+        description: true if this specimen appears to be exsiccata. Add any additional relevant information and context in occurrenceRemarks, e.g. Exsiccatae 484 within the Plantae Suecicae exsiccatae (editor Eric Hultén). Add any additional information 
+      occurrenceRemarks:
+        type: string
+        description: Additional Exsiccata information e.g. number, etc (if isExsiccata is true), AND additional exHerb info e.g. name of original herbarium (if isExHerb is true)
     required: []
