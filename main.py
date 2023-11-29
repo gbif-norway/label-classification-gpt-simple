@@ -42,7 +42,7 @@ with open('helpers/prompt.txt') as prompt, open('helpers/function.yml') as funct
 
 results = {}
 with open('input/catalog_numbers.txt') as file, open('output-append.csv', 'a', newline='') as csvfile:
-    writer = csv.DictWriter(csvfile, fieldnames=['catalogNumber', 'verbatimLabel'] + list(function['function']['parameters']['properties'].keys()))
+    writer = csv.DictWriter(csvfile, fieldnames=['catalogNumber', 'imgurl', 'verbatimLabel'] + list(function['function']['parameters']['properties'].keys()))
     writer.writeheader()
     i = 0
     
@@ -65,7 +65,7 @@ with open('input/catalog_numbers.txt') as file, open('output-append.csv', 'a', n
 
             gpt = gpt_standardise_text(ocr['text'], prompt, function)
         annotate(id=occurrence_id, source='gpt-4', notes=url, annotation=gpt)
-        results[catalog] = {**{'verbatimLabel': ocr['text']}, **gpt}
+        results[catalog] = {**{'verbatimLabel': ocr['text'], 'imgurl': url}, **gpt}
         writer.writerow({**{'catalogNumber': catalog}, **results[catalog]})
         i += 1
         
