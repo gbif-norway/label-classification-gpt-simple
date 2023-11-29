@@ -7,7 +7,7 @@ function:
     properties:
       verbatimIdentification:
         type: string
-        description: determination - multiple separated with |
+        description: Determination - multiple separated with |
       verbatimLocationCollected:
         type: string
       verbatimDateCollected:
