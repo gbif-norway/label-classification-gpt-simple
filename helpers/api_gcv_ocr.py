@@ -12,4 +12,8 @@ def detect_text(image_url):
     })
     response_json = vision.AnnotateImageResponse.to_json(response)
     response_dict = json.loads(response_json)
-    return response_dict['fullTextAnnotation']
+    try: 
+        fta = response_dict['fullTextAnnotation']
+    except:
+        import pdb; pdb.set_trace()
+    return fta
