@@ -63,7 +63,7 @@ with open('input/catalog_numbers.txt') as file, open('output-append.csv', 'a', n
         for exclude in for_exclusion:
             ocr['text'] = re.sub(re.escape(exclude), '', ocr['text'], flags=re.IGNORECASE)
 
-            gpt = gpt_standardise_text(ocr['text'], prompt, function)
+        gpt = gpt_standardise_text(ocr['text'], prompt, function)
         annotate(id=occurrence_id, source='gpt-4', notes=url, annotation=gpt)
         results[catalog] = {**{'verbatimLabel': ocr['text'], 'imgurl': url}, **gpt}
         writer.writerow({**{'catalogNumber': catalog}, **results[catalog]})

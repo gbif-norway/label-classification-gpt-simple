@@ -21,4 +21,10 @@ def gpt_standardise_text(text, prompt, function):
             dwc_terms = json.loads(fc_args, strict=False)  # Throws json.decoder.JSONDecodeError with strict for e.g. """{\n"code": "\nprint('test')"\n}"""
         except json.decoder.JSONDecodeError:
             import pdb; pdb.set_trace()
+    
+    allowed_terms = [x for x, y in function['function']['parameters']['properties'].items()]
+    for dwc_term in dwc_terms.keys():
+        if dwc_term not in allowed_terms:
+            print(f'API returned a non-allowed function key: {dwc_term}')
+            return gpt_standardise_text(text, prompt, function)
     return dwc_terms
