@@ -15,10 +15,10 @@ def gpt_standardise_text(text, prompt, function):
     chat_completion = client.chat.completions.create(**openai_args)
     fc_args = chat_completion.choices[0].message.tool_calls[0].function.arguments
     try:
-        args = ast.literal_eval(fc_args)
+        dwc_terms = ast.literal_eval(fc_args)
     except (SyntaxError, ValueError):
         try:
-            args = json.loads(fc_args, strict=False)  # Throws json.decoder.JSONDecodeError with strict for e.g. """{\n"code": "\nprint('test')"\n}"""
+            dwc_terms = json.loads(fc_args, strict=False)  # Throws json.decoder.JSONDecodeError with strict for e.g. """{\n"code": "\nprint('test')"\n}"""
         except json.decoder.JSONDecodeError:
             import pdb; pdb.set_trace()
-    return args
+    return dwc_terms
