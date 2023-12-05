@@ -6,7 +6,36 @@ import pandas as pd
 import yaml
 import re
 import csv
+from dateutil import parser
 
+norwegian_months = {
+    "januar": "January",
+    "februar": "February",
+    "mars": "March",
+    "april": "April",
+    "mai": "May",
+    "juni": "June",
+    "juli": "July",
+    "august": "August",
+    "september": "September",
+    "oktober": "October",
+    "november": "November",
+    "desember": "December"
+}
+roman_numerals = {
+    "I": 1,
+    "II": 2,
+    "III": 3,
+    "IV": 4,
+    "V": 5,
+    "VI": 6,
+    "VII": 7,
+    "VIII": 8,
+    "IX": 9,
+    "X": 10,
+    "XI": 11,
+    "XII": 12
+}
 
 def get_smallest_img_from_gbif(catalog_number, dataset):
     params = { 'datasetKey': dataset, 'catalogNumber': catalog_number }
@@ -45,6 +74,7 @@ with open('input/catalog_numbers.txt') as file, open('output-append.csv', 'a', n
     writer = csv.DictWriter(csvfile, fieldnames=['catalogNumber', 'imgurl', 'verbatimLabel'] + list(function['function']['parameters']['properties'].keys()))
     writer.writeheader()
     i = 0
+    model = 'gpt-3.5-turbo-instruct'
     
     for catalog in file:
         print(f'----{i}----')
@@ -54,17 +84,31 @@ with open('input/catalog_numbers.txt') as file, open('output-append.csv', 'a', n
         print(f'{catalog} - {url}')
         ocr = detect_text(url)
         print(f'detected text: {ocr["text"]}')
-        annotate(id=occurrence_id, source='gcv_ocr_pages', notes=url, annotation=ocr['pages'])
+        # annotate(id=occurrence_id, source='gcv_ocr_pages', notes=url, annotation=ocr['pages'])
         annotate(id=occurrence_id, source='gcv_ocr_text', notes=url, annotation=ocr['text'])
         # flat = flatten(ocr['pages'])
         # annotate(id=occurrence_id, source='gcv_ocr_flat', notes=url, annotation=flat)
 
-        for_exclusion = ['Herb. Oslo (O)', 'Herb. Univers. Osloensis', 'Herb. Univers. Osloënsis', 'Planta Scandinavica', 'Flora Suecica', 'Flora Norvegica']
+        for_exclusion = [f'V {catalog}', 'Herb. Oslo \(O\)', 'Herb. Univers. Osloensis', 'Herb. Univers. Osloënsis', 'Herb. Univers. Osloensis\s+\d\d\d\d', 'Herb. Univers. Osloënsis\s+\d\d\d\d', 'Planta Scandinavica', 'Flora Suecica', 'Flora Norvegica', 'Herb. Univers. Christianiensis.']
         for exclude in for_exclusion:
-            ocr['text'] = re.sub(re.escape(exclude), '', ocr['text'], flags=re.IGNORECASE)
+            ocr['text'] = re.sub(exclude, '', ocr['text'], flags=re.IGNORECASE)
+        ocr['text'] = re.sub(re.escape('\\s*'.join(catalog)]), '', ocr['text'])
 
-        gpt = gpt_standardise_text(ocr['text'], prompt, function)
+        gpt = gpt_standardise_text(ocr['text'], prompt, function, model)
         annotate(id=occurrence_id, source='gpt-4', notes=url, annotation=gpt)
+
+        date = gpt['verbatimDateCollected']
+        for key, value in norwegian_months.items():
+            text = re.sub(key, str(value), date, flags=re.IGNORECASE)
+        for key, value in roman_numerals.items():
+            text = re.sub(key, str(value), date, flags=re.IGNORECASE)
+        try:
+            gpt['eventDate'] = parser.parse(date)
+        except:
+            pass
+        if not gpt['isExsiccata']:
+            if 'xsiccata' in ocr['text'].lower():
+                gpt['isExsiccata'] = 'true'
         results[catalog] = {**{'verbatimLabel': ocr['text'], 'imgurl': url}, **gpt}
         writer.writerow({**{'catalogNumber': catalog}, **results[catalog]})
         i += 1
