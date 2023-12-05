@@ -20,3 +20,14 @@ def delete_annotation(id):
         print("Successfully deleted.")
     else:
         print(f"Failed to delete. Status code: {response.status_code}, Response: {response.text}")
+
+def get_annotations_filtered(filter_string):
+    url = ANNOTATE_URI + '?' + filter_string
+    all_results = []
+    while url:
+        print(url)
+        response = requests.get(url)
+        data = response.json()
+        all_results.extend(data['results'])
+        url = data['next']
+    return all_results
