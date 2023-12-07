@@ -75,12 +75,13 @@ with open('input/catalog_numbers.txt') as file, open('output-append.csv', 'a', n
     writer = csv.DictWriter(csvfile, fieldnames=['catalogNumber', 'imgurl', 'verbatimLabel', 'eventDate'] + list(function['function']['parameters']['properties'].keys()))
     writer.writeheader()
     i = 0
-    model = 'gpt-3.5-turbo-instruct'
+    model = 'gpt-3.5-turbo-1106'
     
     for catalog in file:
         print(f'----{i}----')
         catalog = catalog.strip()
         occurrence_id = 'urn:catalog:O:V:' + catalog
+        url = get_smallest_img_from_gbif(catalog, 'e45c7d91-81c6-4455-86e3-2965a5739b1f')
         ocr = get_first_annotation(f'resolvable_object_id={occurrence_id}&source=gcv_ocr_text')
         if ocr:
             ocr_text = ocr['annotation']
@@ -104,16 +105,19 @@ with open('input/catalog_numbers.txt') as file, open('output-append.csv', 'a', n
         if 'verbatimDateCollected' in gpt:
             date = gpt['verbatimDateCollected']
             for key, value in norwegian_months.items():
-                text = re.sub(key, str(value), date, flags=re.IGNORECASE)
+                date = re.sub(key, str(value), date, flags=re.IGNORECASE)
             for key, value in roman_numerals.items():
-                text = re.sub(key, str(value), date, flags=re.IGNORECASE)
+                date = re.sub(key, str(value), date, flags=re.IGNORECASE)
             try:
-                gpt['eventDate'] = parser.parse(date, default=datetime(1, 1, 1))
+                gpt['eventDate'] = parser.parse(date, default=datetime(1, 1, 1), dayfirst=True)
             except:
                 pass
         if 'isExsiccata' not in gpt:
             if 'xsiccata' in ocr_text.lower():
                 gpt['isExsiccata'] = 'true'
+        
+        if 'verbatimCollectors' in gpt:
+            gpt['verbatimCollectors'] = re.sub('leg\.?\s*', '', gpt['verbatimCollectors'], flags=re.IGNORECASE)
         results[catalog] = {**{'verbatimLabel':ocr_text, 'imgurl': url}, **gpt}
         writer.writerow({**{'catalogNumber': catalog}, **results[catalog]})
         i += 1
