@@ -1,12 +1,13 @@
 import requests
 from helpers.api_gcv_ocr import detect_text
-from helpers.api_annotater import annotate, delete_annotation
+from helpers.api_annotater import annotate, delete_annotation, get_first_annotation
 from helpers.api_openai import gpt_standardise_text
 import pandas as pd
 import yaml
 import re
 import csv
 from dateutil import parser
+from datetime import datetime
 
 norwegian_months = {
     "januar": "January",
@@ -71,7 +72,7 @@ with open('helpers/prompt.txt') as prompt, open('helpers/function.yml') as funct
 
 results = {}
 with open('input/catalog_numbers.txt') as file, open('output-append.csv', 'a', newline='') as csvfile:
-    writer = csv.DictWriter(csvfile, fieldnames=['catalogNumber', 'imgurl', 'verbatimLabel'] + list(function['function']['parameters']['properties'].keys()))
+    writer = csv.DictWriter(csvfile, fieldnames=['catalogNumber', 'imgurl', 'verbatimLabel', 'eventDate'] + list(function['function']['parameters']['properties'].keys()))
     writer.writeheader()
     i = 0
     model = 'gpt-3.5-turbo-instruct'
@@ -79,34 +80,40 @@ with open('input/catalog_numbers.txt') as file, open('output-append.csv', 'a', n
     for catalog in file:
         print(f'----{i}----')
         catalog = catalog.strip()
-        url = get_smallest_img_from_gbif(catalog, 'e45c7d91-81c6-4455-86e3-2965a5739b1f')
         occurrence_id = 'urn:catalog:O:V:' + catalog
         print(f'{catalog} - {url}')
-        ocr = detect_text(url)
-        print(f'detected text: {ocr["text"]}')
-        # annotate(id=occurrence_id, source='gcv_ocr_pages', notes=url, annotation=ocr['pages'])
-        annotate(id=occurrence_id, source='gcv_ocr_text', notes=url, annotation=ocr['text'])
-        # flat = flatten(ocr['pages'])
-        # annotate(id=occurrence_id, source='gcv_ocr_flat', notes=url, annotation=flat)
 
-        for_exclusion = [f'V {catalog}', 'Herb. Oslo \(O\)', 'Herb. Univers. Osloensis', 'Herb. Univers. Osloënsis', 'Herb. Univers. Osloensis\s+\d\d\d\d', 'Herb. Univers. Osloënsis\s+\d\d\d\d', 'Planta Scandinavica', 'Flora Suecica', 'Flora Norvegica', 'Herb. Univers. Christianiensis.']
+        ocr = get_first_annotation(f'resolvable_object_id={occurrence_id}&source=gcv_ocr_text')
+        if ocr:
+            ocr_text = ocr['annotation']
+        else:
+            url = get_smallest_img_from_gbif(catalog, 'e45c7d91-81c6-4455-86e3-2965a5739b1f')
+            ocr = detect_text(url)
+            print(f'detected text: {ocr["text"]}')
+            annotate(id=occurrence_id, source='gcv_ocr_pages', notes=url, annotation=ocr['pages'])
+            annotate(id=occurrence_id, source='gcv_ocr_text', notes=url, annotation=ocr['text'])
+            flat = flatten(ocr['pages'])
+            annotate(id=occurrence_id, source='gcv_ocr_flat', notes=url, annotation=flat)
+            ocr_text = ocr['text']
+
+        for_exclusion = [f'V {catalog}', '\\s*'.join(catalog), r'Herb. Oslo \(O\)', r'Herb. Univers. Osloensis', r'Herb. Univers. Osloënsis', r'Herb. Univers. Osloensis\s+\d\d\d\d', r'Herb. Univers. Osloënsis\s+\d\d\d\d', r'Planta Scandinavica', r'Flora Suecica', r'Flora Norvegica', r'Herb. Univers. Christianiensis.']
         for exclude in for_exclusion:
-            ocr['text'] = re.sub(exclude, '', ocr['text'], flags=re.IGNORECASE)
-        ocr['text'] = re.sub(re.escape('\\s*'.join(catalog)]), '', ocr['text'])
+            ocr_text = re.sub(exclude, '', ocr_text, flags=re.IGNORECASE)
 
-        gpt = gpt_standardise_text(ocr['text'], prompt, function, model)
+        gpt = gpt_standardise_text(ocr_text, prompt, function, model)
         annotate(id=occurrence_id, source='gpt-4', notes=url, annotation=gpt)
 
-        date = gpt['verbatimDateCollected']
-        for key, value in norwegian_months.items():
-            text = re.sub(key, str(value), date, flags=re.IGNORECASE)
-        for key, value in roman_numerals.items():
-            text = re.sub(key, str(value), date, flags=re.IGNORECASE)
-        try:
-            gpt['eventDate'] = parser.parse(date)
-        except:
-            pass
-        if not gpt['isExsiccata']:
+        if 'verbatimDateCollected' in gpt:
+            date = gpt['verbatimDateCollected']
+            for key, value in norwegian_months.items():
+                text = re.sub(key, str(value), date, flags=re.IGNORECASE)
+            for key, value in roman_numerals.items():
+                text = re.sub(key, str(value), date, flags=re.IGNORECASE)
+            try:
+                gpt['eventDate'] = parser.parse(date, default=datetime(1, 1, 1))
+            except:
+                pass
+        if 'isExsiccata' not in gpt:
             if 'xsiccata' in ocr['text'].lower():
                 gpt['isExsiccata'] = 'true'
         results[catalog] = {**{'verbatimLabel': ocr['text'], 'imgurl': url}, **gpt}

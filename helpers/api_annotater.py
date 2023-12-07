@@ -21,6 +21,11 @@ def delete_annotation(id):
     else:
         print(f"Failed to delete. Status code: {response.status_code}, Response: {response.text}")
 
+def get_first_annotation(filter_string):
+    response = requests.get(ANNOTATE_URI + '?' + filter_string)
+    data = response.json()
+    return data['results'][0] if data['results'] else None
+
 def get_annotations_filtered(filter_string):
     url = ANNOTATE_URI + '?' + filter_string
     all_results = []
