@@ -81,13 +81,11 @@ with open('input/catalog_numbers.txt') as file, open('output-append.csv', 'a', n
         print(f'----{i}----')
         catalog = catalog.strip()
         occurrence_id = 'urn:catalog:O:V:' + catalog
-        print(f'{catalog} - {url}')
-
         ocr = get_first_annotation(f'resolvable_object_id={occurrence_id}&source=gcv_ocr_text')
         if ocr:
             ocr_text = ocr['annotation']
         else:
-            url = get_smallest_img_from_gbif(catalog, 'e45c7d91-81c6-4455-86e3-2965a5739b1f')
+            print(f'{catalog} - {url}')
             ocr = detect_text(url)
             print(f'detected text: {ocr["text"]}')
             annotate(id=occurrence_id, source='gcv_ocr_pages', notes=url, annotation=ocr['pages'])
@@ -101,7 +99,7 @@ with open('input/catalog_numbers.txt') as file, open('output-append.csv', 'a', n
             ocr_text = re.sub(exclude, '', ocr_text, flags=re.IGNORECASE)
 
         gpt = gpt_standardise_text(ocr_text, prompt, function, model)
-        annotate(id=occurrence_id, source='gpt-4', notes=url, annotation=gpt)
+        annotate(id=occurrence_id, source='gpt-4', notes=ocr['id'], annotation=gpt)
 
         if 'verbatimDateCollected' in gpt:
             date = gpt['verbatimDateCollected']
@@ -114,9 +112,9 @@ with open('input/catalog_numbers.txt') as file, open('output-append.csv', 'a', n
             except:
                 pass
         if 'isExsiccata' not in gpt:
-            if 'xsiccata' in ocr['text'].lower():
+            if 'xsiccata' in ocr_text.lower():
                 gpt['isExsiccata'] = 'true'
-        results[catalog] = {**{'verbatimLabel': ocr['text'], 'imgurl': url}, **gpt}
+        results[catalog] = {**{'verbatimLabel':ocr_text, 'imgurl': url}, **gpt}
         writer.writerow({**{'catalogNumber': catalog}, **results[catalog]})
         i += 1
         
