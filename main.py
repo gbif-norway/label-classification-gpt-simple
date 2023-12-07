@@ -2,41 +2,12 @@ import requests
 from helpers.api_gcv_ocr import detect_text
 from helpers.api_annotater import annotate, delete_annotation, get_first_annotation
 from helpers.api_openai import gpt_standardise_text
+from helpers.date_parser import custom_date_parse
 import pandas as pd
 import yaml
 import re
 import csv
-from dateutil import parser
-from datetime import datetime
 
-norwegian_months = {
-    "januar": "January",
-    "februar": "February",
-    "mars": "March",
-    "april": "April",
-    "mai": "May",
-    "juni": "June",
-    "juli": "July",
-    "august": "August",
-    "september": "September",
-    "oktober": "October",
-    "november": "November",
-    "desember": "December"
-}
-roman_numerals = {
-    "I": 1,
-    "II": 2,
-    "III": 3,
-    "IV": 4,
-    "V": 5,
-    "VI": 6,
-    "VII": 7,
-    "VIII": 8,
-    "IX": 9,
-    "X": 10,
-    "XI": 11,
-    "XII": 12
-}
 
 def get_smallest_img_from_gbif(catalog_number, dataset):
     params = { 'datasetKey': dataset, 'catalogNumber': catalog_number }
@@ -103,23 +74,14 @@ with open('input/catalog_numbers.txt') as file, open('output-append.csv', 'a', n
         annotate(id=occurrence_id, source='gpt-4', notes=ocr['id'], annotation=gpt)
 
         if 'verbatimDateCollected' in gpt:
-            date = gpt['verbatimDateCollected']
-            for key, value in norwegian_months.items():
-                date = re.sub(key, str(value), date, flags=re.IGNORECASE)
-            for key, value in roman_numerals.items():
-                date = re.sub(key, str(value), date, flags=re.IGNORECASE)
-            try:
-                gpt['eventDate'] = parser.parse(date, default=datetime(1, 1, 1), dayfirst=True)
-                if gpt['eventDate'] == datetime(1, 1, 1):
-                    gpt['eventDate'] = ''
-            except:
-                pass
+            gpt['eventDate'] = custom_date_parse(gpt['verbatimDateCollected'])
+
         if 'isExsiccata' not in gpt:
             if 'xsiccata' in ocr_text.lower():
                 gpt['isExsiccata'] = 'true'
         
         if 'verbatimCollectors' in gpt:
-            gpt['verbatimCollectors'] = re.sub('leg\.?\s*', '', gpt['verbatimCollectors'], flags=re.IGNORECASE)
+            gpt['verbatimCollectors'] = re.sub(r'leg\.?\s*', '', gpt['verbatimCollectors'], flags=re.IGNORECASE)
         results[catalog] = {**{'verbatimLabel':ocr_text, 'imgurl': url}, **gpt}
         writer.writerow({**{'catalogNumber': catalog}, **results[catalog]})
         i += 1
