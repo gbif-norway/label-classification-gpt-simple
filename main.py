@@ -110,6 +110,8 @@ with open('input/catalog_numbers.txt') as file, open('output-append.csv', 'a', n
                 date = re.sub(key, str(value), date, flags=re.IGNORECASE)
             try:
                 gpt['eventDate'] = parser.parse(date, default=datetime(1, 1, 1), dayfirst=True)
+                if gpt['eventDate'] == datetime(1, 1, 1):
+                    gpt['eventDate'] = ''
             except:
                 pass
         if 'isExsiccata' not in gpt:
