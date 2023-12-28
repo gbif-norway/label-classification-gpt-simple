@@ -1,0 +1,31 @@
+type: function
+function:
+  name: extract_dwc
+  description: Extract Darwin Core Terms from OCRed herbarium label specimen text
+  parameters:
+    type: object
+    properties:
+      verbatimIdentification:
+        type: string
+        description: Determination - multiple separated with |
+      verbatimLocationCollected:
+        type: string
+      verbatimDateCollected:
+        type: string
+      verbatimCollectors:
+        type: string
+        description: Do not include herbarium names or Leg. when it is present before the name of a collector
+      verbatimElevation:
+        type: string
+      verbatimCoordinates:
+        type: string
+      isExHerb:
+        type: boolean
+        description: true if this specimen appears to be an ex herb specimen. Add any relevant info to occurrenceRemarks, e.g. Originally from UNIV. OULUENSIS
+      isExsiccata:
+        type: boolean
+        description: true if this specimen appears to be exsiccata. Add any relevant info to occurrenceRemarks, e.g. Exsiccatae 484 in Plantae Suecicae
+      occurrenceRemarks:
+        type: string
+        description: Additional Exsiccata information e.g. number, etc (if isExsiccata is true), AND additional exHerb info e.g. name of original herbarium (if isExHerb is true)
+    required: []

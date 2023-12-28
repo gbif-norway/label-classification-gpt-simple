@@ -4,5 +4,5 @@ gapi-secret.json
 __pycache__/
 *.pyc
 *.jpg
-input/**/*
+*.csv
 .vscode/
