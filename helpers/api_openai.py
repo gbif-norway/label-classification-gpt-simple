@@ -35,7 +35,7 @@ def gpt_standardise_text(text, prompt, function, model):
     for dwc_term in dwc_terms.keys():
         if dwc_term not in allowed_terms:
             print(f'API returned a non-allowed function key: {dwc_term}, trying again')
-            return gpt_standardise_text(text, prompt, function)
+            return gpt_standardise_text(text, prompt, function, model)
 
     dwc_terms = {key: decode_unicode_escapes(value) if isinstance(value, str) else value for key, value in dwc_terms.items()}
     return dwc_terms

@@ -39,7 +39,7 @@ def custom_date_parse(date_str):
         date_str = re.sub(r'\b' + key + r'\b', str(value), date_str, flags=re.IGNORECASE)
 
     try:
-        date = parser.parse(date, default=datetime(1, 1, 1), dayfirst=True)
+        date = parser.parse(date_str, default=datetime(1, 1, 1), dayfirst=True)
         if date == datetime(1, 1, 1):
             return None
         return date
