@@ -1,8 +1,8 @@
 from helpers.api_gcv_ocr import detect_text
 from helpers.api_annotater import annotate, delete_annotation, get_first_annotation
 from helpers.api_openai import gpt_standardise_text
-from helpers.date_parser import custom_date_parse
-from helpers.custom import text_exclusion
+from helpers.custom import norway_date_parse
+from helpers.custom import norway_text_exclusion
 from helpers.api_gbif import get_smallest_img_from_gbif
 import pandas as pd
 import yaml
@@ -34,17 +34,17 @@ with open('input/catalog_numbers.txt') as file, open('output-append.csv', 'a', n
             print(f'detected text: {ocr["text"]}')
             annotate(id=occurrence_id, source='gcv_ocr_pages', notes=url, annotation=ocr['pages'])
             annotate(id=occurrence_id, source='gcv_ocr_text', notes=url, annotation=ocr['text'])
-            flat = flatten(ocr['pages'])
-            annotate(id=occurrence_id, source='gcv_ocr_flat', notes=url, annotation=flat)
+            # flat = flatten(ocr['pages'])
+            # annotate(id=occurrence_id, source='gcv_ocr_flat', notes=url, annotation=flat)
             ocr_text = ocr['text']
 
-        ocr_text = text_exclusion(ocr_text)
+        ocr_text = norway_text_exclusion(ocr_text)
 
         gpt = gpt_standardise_text(ocr_text, prompt, function, 'gpt-3.5-turbo-1106')
         annotate(id=occurrence_id, source='gpt-4', notes=ocr['id'], annotation=gpt)
 
         if 'verbatimDateCollected' in gpt:
-            gpt['eventDate'] = custom_date_parse(gpt['verbatimDateCollected'])
+            gpt['eventDate'] = norway_date_parse(gpt['verbatimDateCollected'])
 
         if 'isExsiccata' not in gpt:
             if 'xsiccata' in ocr_text.lower():

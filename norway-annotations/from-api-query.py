@@ -1,4 +1,3 @@
-import requests
 from helpers.api_annotater import get_annotations_filtered
 import pandas as pd
 
