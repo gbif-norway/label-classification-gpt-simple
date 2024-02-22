@@ -1,8 +1,8 @@
 import requests
+import os
 
-def get_smallest_img_from_gbif(catalog_number, dataset):
-    params = { 'datasetKey': dataset, 'catalogNumber': catalog_number }
-    response = requests.get('https://api.gbif.org/v1/occurrence/search', params=params)
+def get_smallest_img_from_gbif(catalog_number):
+    response = requests.get(f'https://api.gbif.org/v1/occurrence/search?datasetKey={os.getenv('DATASET_ID')}&catalogNumber={catalog_number}')
     if response.status_code != 200:
         import pdb; pdb.set_trace()
 
@@ -21,6 +21,6 @@ def get_smallest_img_from_gbif(catalog_number, dataset):
                         smallest_size = image_size
                         smallest_image_url = image_url
                 except requests.RequestException as e:
-                    print(f'Failed to get image {image_url}: {e}')
+                    print(f'Failed to get image {image_url} - {catalog_number}: {e}')
 
     return smallest_image_url
