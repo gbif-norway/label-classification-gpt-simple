@@ -48,9 +48,9 @@ with open('input/catalog_numbers.txt') as file, open('output-append.csv', 'a', n
         if 'verbatimDateCollected' in gpt:
             gpt['eventDate'] = norway_date_parse(gpt['verbatimDateCollected'])
 
-        if 'isExsiccata' not in gpt:
-            if 'xsiccata' in ocr_text.lower():
-                gpt['isExsiccata'] = 'true'
+        # if 'isExsiccata' not in gpt:
+        #     if 'xsiccata' in ocr_text.lower():
+        #         gpt['isExsiccata'] = 'true'
         
         if 'verbatimCollectors' in gpt:
             gpt['verbatimCollectors'] = re.sub(r'leg\.?\s*', '', gpt['verbatimCollectors'], flags=re.IGNORECASE)

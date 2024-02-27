@@ -19,12 +19,20 @@ function:
         type: string
       verbatimCoordinates:
         type: string
-      isExHerb:
-        type: boolean
-        description: true if this specimen appears to be an ex herb specimen. Add any relevant info to occurrenceRemarks, e.g. Originally from UNIV. OULUENSIS
-      isExsiccata:
-        type: boolean
-        description: true if this specimen appears to be exsiccata. Add any relevant info to occurrenceRemarks, e.g. Exsiccatae 484 in Plantae Suecicae
+      verbatimIdentifiedBy:
+        type: string
+      verbatimIdentifiedDate:
+        type: string
+      verbatimElevation:
+        type: string
+      verbatimHabitat:
+        type: string
+      # isExHerb:
+      #   type: boolean
+      #   description: true if this specimen appears to be an ex herb specimen. Add any relevant info to occurrenceRemarks, e.g. Originally from UNIV. OULUENSIS
+      # isExsiccata:
+      #   type: boolean
+      #   description: true if this specimen appears to be exsiccata. Add any relevant info to occurrenceRemarks, e.g. Exsiccatae 484 in Plantae Suecicae
       occurrenceRemarks:
         type: string
         description: Additional Exsiccata information e.g. number, etc (if isExsiccata is true), AND additional exHerb info e.g. name of original herbarium (if isExHerb is true)

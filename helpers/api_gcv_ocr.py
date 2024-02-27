@@ -7,8 +7,10 @@ from skimage.transform import resize
 import io as python_io
 import os
 import tempfile
+from tenacity import retry, stop_after_attempt, wait_chain, wait_fixed
 
 
+@retry(stop=stop_after_attempt(10), wait=wait_chain(*[wait_fixed(3) for i in range(3)] + [wait_fixed(9)]))
 def download_image(image_url):
     response = requests.get(image_url)
     if response.status_code == 200:
@@ -25,6 +27,7 @@ def crop_image_skimage(image_path, bottom_crop_px):
     cropped_img = img[:-bottom_crop_px, :]
     return cropped_img
 
+@retry(stop=stop_after_attempt(10), wait=wait_chain(*[wait_fixed(3) for i in range(3)] + [wait_fixed(9)]))
 def detect_text_in_cropped_image_skimage(cropped_img):
     img_byte_arr = python_io.BytesIO()
     io.imsave(img_byte_arr, cropped_img, format='JPEG')
